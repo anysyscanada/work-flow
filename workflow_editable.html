@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メディカルツーリズム ワークフロー</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Helvetica Neue",Arial,sans-serif;background:#f9f8f4;padding:16px;color:#2c2c2a}
+h2{font-size:14px;font-weight:700;text-align:center;color:#0C447C;margin-bottom:10px}
+
+/* Edit mode toggle */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid #d3d1c7}
+.toolbar label{font-size:12px;color:#5F5E5A}
+.toggle-wrap{display:flex;align-items:center;gap:6px}
+.toggle{width:36px;height:20px;background:#d3d1c7;border-radius:10px;cursor:pointer;position:relative;transition:background .2s}
+.toggle.on{background:#1D9E75}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(16px)}
+.print-btn{margin-left:auto;padding:6px 14px;background:#378ADD;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
+.print-btn:hover{background:#185FA5}
+
+/* Layout */
+.flow{display:flex;flex-direction:column;gap:6px;max-width:900px;margin:0 auto}
+
+/* Section containers */
+.section{border-radius:10px;padding:10px 12px;border:1.5px dashed}
+.sec-canada{border-color:#378ADD;background:rgba(230,241,251,0.15)}
+.sec-japan{border-color:#D85A30;background:rgba(250,236,231,0.15)}
+.sec-cross{border-color:#888780;background:rgba(241,239,232,0.3);border-style:dashed}
+.sec-phase2{border-color:#1D9E75;background:rgba(225,245,238,0.3)}
+.sec-label{font-size:10px;font-weight:700;margin-bottom:8px}
+.lbl-canada{color:#185FA5}
+.lbl-japan{color:#993C1D}
+.lbl-cross{color:#5F5E5A}
+.lbl-phase2{color:#085041}
+
+/* Box rows */
+.row{display:flex;gap:8px;align-items:stretch;margin-bottom:6px}
+.row.center{justify-content:center}
+
+/* Individual boxes */
+.box{border-radius:8px;padding:6px 10px;flex:1;min-width:0;border:1.5px solid}
+.box-blue{background:#E6F1FB;border-color:#185FA5}
+.box-coral{background:#FAECE7;border-color:#993C1D}
+.box-teal{background:#E1F5EE;border-color:#0F6E56}
+.box-amber{background:#FAEEDA;border-color:#854F0B}
+.box-gray{background:#F1EFE8;border-color:#5F5E5A}
+.box-green{background:#EAF3DE;border-color:#3B6D11}
+.box-purple{background:#EEEDFE;border-color:#534AB7}
+.box-warn{background:#FAEEDA;border-color:#BA7517;border-width:1.5px}
+
+.box-title{font-size:11px;font-weight:700;margin-bottom:2px}
+.box-sub{font-size:10px;color:#5F5E5A;line-height:1.4}
+.bt-blue{color:#0C447C}.bt-coral{color:#712B13}
+.bt-teal{color:#085041}.bt-amber{color:#633806}
+.bt-gray{color:#444441}.bt-green{color:#27500A}
+.bt-warn{color:#633806}
+
+/* Editable fields */
+.ef{display:inline-block;border:none;background:transparent;font-family:inherit;color:inherit;font-size:inherit;font-weight:inherit;width:100%;outline:none;cursor:default}
+.edit-mode .ef{border-bottom:1.5px dashed #378ADD;cursor:text;background:rgba(230,241,251,0.4);border-radius:2px;padding:0 2px}
+.edit-mode .ef:focus{background:#fff;border-color:#185FA5;border-radius:3px}
+
+/* Arrow indicators */
+.arrow-down{text-align:center;color:#378ADD;font-size:16px;line-height:1;margin:1px 0}
+.arrow-right{display:flex;align-items:center;justify-content:center;color:#378ADD;font-size:14px;padding:0 2px;flex:0 0 auto}
+
+/* Tags / pills */
+.tag-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tag{font-size:9px;padding:1px 7px;border-radius:4px;font-weight:600;border:1px solid}
+.tag-purple{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC}
+.tag-teal{background:#E1F5EE;color:#085041;border-color:#5DCAA5}
+.tag-amber{background:#FAEEDA;color:#633806;border-color:#EF9F27}
+.tag-gray{background:#F1EFE8;color:#444441;border-color:#B4B2A9}
+.tag-coral{background:#FAECE7;color:#712B13;border-color:#F0997B}
+
+/* Phase bar */
+.phase-bar{border-radius:6px;padding:6px 14px;text-align:center;font-size:12px;font-weight:700;border:1.5px solid}
+.phase1{background:#E6F1FB;border-color:#185FA5;color:#0C447C}
+.phase2{background:#E1F5EE;border-color:#0F6E56;color:#085041}
+
+/* Cost table */
+.cost-table{font-size:10px;line-height:1.8;color:#2c2c2a}
+.cost-table .highlight{color:#085041;font-weight:700}
+
+/* Print */
+@media print{
+  .toolbar{display:none}
+  body{background:white;padding:8px}
+  .section{break-inside:avoid}
+  @page{size:letter portrait;margin:0.4in}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="toggle-wrap">
+    <div class="toggle" id="toggle" onclick="toggleEdit()"></div>
+    <label id="toggle-label">編集モード：OFF（クリックして編集可能に）</label>
+  </span>
+  <button class="print-btn" onclick="window.print()">印刷 / PDF保存</button>
+</div>
+
+<div class="flow" id="flow">
+
+  <div class="phase-bar phase1">フェーズ1　検査・人間ドック（まずここから）</div>
+
+  <!-- CANADA -->
+  <div class="section sec-canada">
+    <div class="sec-label lbl-canada">カナダ側　／　窓口・紹介・旅行手配</div>
+
+    <div class="row">
+      <div class="box box-blue">
+        <div class="box-title bt-blue"><input class="ef" value="高齢日本人コミュニティ"></div>
+        <div class="box-sub"><input class="ef" value="バンクーバー在住・口コミ"></div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="box box-blue">
+        <div class="box-title bt-blue"><input class="ef" value="小沢先生"></div>
+        <div class="box-sub"><input class="ef" value="コミュニティ紹介"></div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="box box-blue">
+        <div class="box-title bt-blue"><input class="ef" value="米原先生"></div>
+        <div class="box-sub"><input class="ef" value="コミュニティ紹介"></div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="box box-blue">
+        <div class="box-title bt-blue"><input class="ef" value="山本"></div>
+        <div class="box-sub"><input class="ef" value="窓口・調整・精算"></div>
+      </div>
+    </div>
+
+    <div class="box box-amber" style="margin-bottom:6px">
+      <div class="box-title bt-amber"><input class="ef" value="トラベルエージェント（調整中）"></div>
+      <div class="box-sub"><input class="ef" value="フライト・ホテル・現地移動を一括手配　→　カナダチーム内で収益化　／　患者はワンストップで完結"></div>
+    </div>
+
+    <div class="box box-green" style="margin-bottom:6px;font-size:10px;color:#27500A">
+      <strong>将来展開：</strong><input class="ef" value="カナダ人一般層へ口コミ拡大　→「日本旅行＋人間ドック」完全パッケージ化" style="font-size:10px;color:#27500A">
+    </div>
+
+    <div class="arrow-down">↓</div>
+
+    <div class="row center">
+      <div class="box box-teal" style="max-width:480px">
+        <div class="box-title bt-teal" style="text-align:center">申込受付・エスクロー（前払い一括）</div>
+        <div class="box-sub" style="text-align:center">
+          医療費＋旅行費＋手数料　目安：<input class="ef" value="CAD 4,000〜6,000" style="width:140px;text-align:center"><br>
+          <input class="ef" value="山本が管理　→ 帰国後に各関係者へ精算" style="text-align:center">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CROSS BORDER -->
+  <div class="section sec-cross">
+    <div class="sec-label lbl-cross">クロスボーダー調整</div>
+    <div class="box box-gray" style="text-align:center">
+      <div class="box-title bt-gray">クリニック選定・予約・スケジュール調整・翻訳対応</div>
+      <div class="box-sub"><input class="ef" value="山本 ↔ 小野さん（二友株式会社）" style="text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- JAPAN -->
+  <div class="section sec-japan">
+    <div class="sec-label lbl-japan">日本側　／　受入・実施</div>
+
+    <div class="row" style="margin-bottom:8px">
+      <div class="box box-coral">
+        <div class="box-title bt-coral"><input class="ef" value="小野さん（二友株式会社）"></div>
+        <div class="box-sub"><input class="ef" value="現地調整・通訳・クリニック交渉"></div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="box box-coral">
+        <div class="box-title bt-coral"><input class="ef" value="日本の医療機関"></div>
+        <div class="box-sub"><input class="ef" value="人間ドック・PET・MRI等"></div>
+      </div>
+      <div class="arrow-right">→</div>
+      <div class="box box-amber">
+        <div class="box-title bt-amber"><input class="ef" value="旅行・宿泊（CA手配済）"></div>
+        <div class="box-sub"><input class="ef" value="観光・ホテル・移動　一括済"></div>
+      </div>
+    </div>
+
+    <!-- Menu -->
+    <div class="box box-gray" style="margin-bottom:6px">
+      <div class="box-sub" style="margin-bottom:4px;font-weight:700;color:#444">検査・ドックメニュー（フェーズ1）</div>
+      <div class="tag-row" id="menu-tags">
+        <span class="tag tag-purple"><input class="ef" value="人間ドック（基本）" style="width:90px"></span>
+        <span class="tag tag-amber"><input class="ef" value="PET-CT検査" style="width:70px"></span>
+        <span class="tag tag-teal"><input class="ef" value="脳MRIドック" style="width:70px"></span>
+        <span class="tag tag-gray"><input class="ef" value="1泊2日ドック" style="width:70px"></span>
+        <span class="tag tag-coral"><input class="ef" value="人間ドック＋PET" style="width:85px"></span>
+        <span class="tag tag-gray"><input class="ef" value="将来：放射線・再生医療他" style="width:120px"></span>
+      </div>
+    </div>
+
+    <!-- Caution -->
+    <div class="box box-warn" style="margin-bottom:6px">
+      <div class="box-title bt-warn">カナダ認証について：</div>
+      <div class="box-sub" style="color:#633806">
+        <input class="ef" value="検査結果は英訳サマリーでカナダの主治医へ引継ぎ可能。再生医療等はHealth Canada未承認のため将来フェーズで要確認。" style="color:#633806">
+      </div>
+    </div>
+
+    <!-- Cost breakdown -->
+    <div class="box box-gray" style="margin-bottom:6px">
+      <div class="box-sub" style="font-weight:700;color:#444;margin-bottom:4px">費用の目安と内訳（人間ドック1泊2日＋旅行4泊5日の例）</div>
+      <div class="cost-table">
+        クリニック実費　<input class="ef" value="約¥150,000" style="width:80px">　＋　フライト・ホテル　<input class="ef" value="約CAD 2,000〜3,000" style="width:120px"><br>
+        小野さん手数料　<input class="ef" value="約15%" style="width:40px">（医療費ベース）　＋　カナダチーム手数料　<input class="ef" value="約15%" style="width:40px">（医療費ベース）<br>
+        旅行利益　カナダチーム内で計上　＋　予備費（通訳・移動等）<br>
+        <span class="highlight">エスクロー合計目安：<input class="ef" value="CAD 4,500〜6,500（旅行費込み）" style="width:190px;color:#085041;font-weight:700">　医療費のみ：<input class="ef" value="CAD 2,000〜2,500" style="width:100px;color:#085041;font-weight:700"></span>
+      </div>
+    </div>
+
+    <!-- Payment row -->
+    <div class="row">
+      <div class="box box-teal">
+        <div class="box-title bt-teal"><input class="ef" value="クリニックへ送金"></div>
+        <div class="box-sub"><input class="ef" value="エスクローから直接"></div>
+      </div>
+      <div class="arrow-right" style="color:#1D9E75">→</div>
+      <div class="box box-teal">
+        <div class="box-title bt-teal"><input class="ef" value="小野さんへ謝礼"></div>
+        <div class="box-sub"><input class="ef" value="医療費の15%（固定）"></div>
+      </div>
+      <div class="arrow-right" style="color:#1D9E75">→</div>
+      <div class="box box-teal">
+        <div class="box-title bt-teal"><input class="ef" value="カナダチームの取り分"></div>
+        <div class="box-sub"><input class="ef" value="医療手数料＋旅行利益　分配TBD"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOLLOWUP -->
+  <div class="box box-gray">
+    <div class="box-sub" style="font-weight:700;color:#444;margin-bottom:4px">帰国後フォローアップ</div>
+    <div class="row">
+      <div class="box box-gray">
+        <div class="box-title bt-gray"><input class="ef" value="英訳検査結果レポート送付"></div>
+      </div>
+      <div class="box box-gray">
+        <div class="box-title bt-gray"><input class="ef" value="カナダ主治医へ引継ぎ"></div>
+      </div>
+      <div class="box box-gray">
+        <div class="box-title bt-gray"><input class="ef" value="口コミ促進・次回予約・満足度調査"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase-bar phase2">フェーズ2　将来展開：治療目的拡大　＋　カナダ人一般層へ</div>
+  <div class="section sec-phase2">
+    <div class="row">
+      <div class="box box-teal">
+        <div class="box-title bt-teal"><input class="ef" value="放射線・ガンマナイフ"></div>
+        <div class="box-sub"><input class="ef" value="英訳医療サマリー必須"></div>
+      </div>
+      <div class="box box-teal">
+        <div class="box-title bt-teal"><input class="ef" value="再生医療・免疫療法"></div>
+        <div class="box-sub"><input class="ef" value="Health Canada要確認"></div>
+      </div>
+      <div class="box box-teal">
+        <div class="box-title bt-teal"><input class="ef" value="カナダ人一般層へ拡大"></div>
+        <div class="box-sub"><input class="ef" value="旅行会社・観光局と連携"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="box box-gray" style="font-size:10px;color:#888780;line-height:1.7">
+    <strong style="color:#444">メモ欄：</strong><br>
+    <textarea class="ef" style="width:100%;height:60px;resize:vertical;border:none;background:transparent;font-size:10px;color:#5F5E5A;font-family:inherit">ここに自由にメモを入力できます。</textarea>
+  </div>
+
+</div>
+
+<script>
+var editing = false;
+function toggleEdit(){
+  editing = !editing;
+  var tog = document.getElementById('toggle');
+  var lbl = document.getElementById('toggle-label');
+  var flow = document.getElementById('flow');
+  if(editing){
+    tog.classList.add('on');
+    lbl.textContent = '編集モード：ON（各テキストをクリックして編集）';
+    flow.classList.add('edit-mode');
+  } else {
+    tog.classList.remove('on');
+    lbl.textContent = '編集モード：OFF（クリックして編集可能に）';
+    flow.classList.remove('edit-mode');
+  }
+}
+// Prevent form submission on enter
+document.querySelectorAll('input.ef').forEach(function(el){
+  el.addEventListener('keydown', function(e){ if(e.key==='Enter') e.preventDefault(); });
+});
+</script>
+</body>
+</html>
